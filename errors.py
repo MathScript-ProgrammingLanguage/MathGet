@@ -12,7 +12,7 @@ class ErrorMeta(type):
         'InternalError': (0x6000, 0x6FFF),
         'SystemError': (0x7000, 0x7FFF),
     }
-    _next_code = {}
+    _next_code = {} # type: ignore
 
     def __new__(cls, name, bases, class_dict):
         if bases and bases[0] == Error:
@@ -85,7 +85,7 @@ class Error(metaclass=ErrorMeta):
     def __repr__(self) -> str:
         """Return a string representation of the error."""
 
-        return f"{self.type} (Error code: {hex(self.code)} [{self.code}]):\n    {self.message}\n\n{self.stacktrace}"
+        return f"{self.type} (Error code: {hex(self.code)} [{self.code}]):\n    {self.message}\n\n{self.stacktrace}" # type: ignore
 
 # Error codes categories:
 # 0x1000 - 0x1FFF: Network errors

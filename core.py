@@ -12,14 +12,14 @@ from _types import *
 
 # ################################## Variables ###################################
 
-package_index_repo_url: URL = URL("http://mathget-index/") # localhost, see the mathget-index directory
+package_index_repo_url: URL = URL("http://mathget-index.byethost12.com/") # free host
 
 try:
     mathscript_install_dir: Path = Path(shutil.which("mathscript")).parent # type: ignore
 except TypeError:
     err: InstallationNotFoundError = InstallationNotFoundError()
     print(err)
-    sys.exit(err.code)
+    sys.exit(err.code) # type: ignore
 
 packages_install_dir: Path = mathscript_install_dir / 'user_packages'
 
@@ -129,7 +129,7 @@ def get_remote_metadata(package_name: str, version: str = 'latest') -> dict | Er
     """
     
     try:
-        response: requests.Response = requests.get(str(package_index_repo_url / 'packages' / 'metadata' / f'{package_name}?version={version}'))
+        response: requests.Response = requests.get(str(package_index_repo_url / 'packages' / 'metadata.php' / f'{package_name}?version={version}'))
     except requests.exceptions.RequestException as e:
         if isinstance(e, requests.exceptions.ConnectionError):
             return NetworkError("Unable to connect to the package index.")
@@ -159,7 +159,7 @@ def download_package_from_index(package_name: str, version: str, path: Path) -> 
     None | Error: The error (None if there isn't)
     """
     try:
-        response: requests.Response = requests.get(str(package_index_repo_url / 'packages' / 'install' / f'{package_name}?version={version}'), stream=True)
+        response: requests.Response = requests.get(str(package_index_repo_url / 'packages' / 'install.php' / f'{package_name}?version={version}'), stream=True)
     except requests.exceptions.RequestException as e:
         if isinstance(e, requests.exceptions.ConnectionError):
             return NetworkError("Unable to connect to the package index.")
@@ -196,7 +196,7 @@ def download_metadata_from_index(package_name: str, version: str, path: Path) ->
     None | Error: The error (None if there isn't)
     """
     try:
-        response: requests.Response = requests.get(str(package_index_repo_url / 'packages' / 'metadata' / f'{package_name}?version={version}'))
+        response: requests.Response = requests.get(str(package_index_repo_url / 'packages' / 'metadata.php' / f'{package_name}?version={version}'))
     except requests.exceptions.RequestException as e:
         if isinstance(e, requests.exceptions.ConnectionError):
             return NetworkError("Unable to connect to the package index.")
@@ -616,7 +616,7 @@ def get_versions(package_name: str) -> None | Error:
     """
 
     try:
-        response: requests.Response = requests.get(str(package_index_repo_url / 'packages' / 'versions' / f'{package_name}'))
+        response: requests.Response = requests.get(str(package_index_repo_url / 'packages' / 'versions.php' / f'{package_name}'))
     except requests.exceptions.RequestException as e:
         if isinstance(e, requests.exceptions.ConnectionError):
             return NetworkError("Unable to connect to the package index.")
@@ -656,7 +656,7 @@ def get_changelog(package_name: str) -> None | Error:
     if isinstance(metadata, Error):
         return metadata
     
-    changelog = metadata['changelog'] if 'changelog' in metadata else []
+    changelog = metadata['package']['changelog'] if 'changelog' in metadata['package'] else []
 
     if changelog == []:
         print(f'No changelog found for package "{package_name}".')
