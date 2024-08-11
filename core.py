@@ -502,7 +502,7 @@ def search(keyword: str, package_index_url: str | None = None) -> None | Error: 
         package_index_url: URL = package_index_repo_url # type: ignore
 
     try:
-        response: requests.Response = requests.get(str(package_index_url / 'search' / keyword)) # type: ignore
+        response: requests.Response = requests.get(str(package_index_url / 'search.php' / keyword)) # type: ignore
     except requests.exceptions.RequestException as e:
         if isinstance(e, requests.exceptions.ConnectionError):
             return NetworkError("Unable to connect to the package index.")
