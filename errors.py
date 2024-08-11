@@ -2,25 +2,55 @@ from pathlib import Path
 import inspect
 import sys
 
-class Error:
+class ErrorMeta(type):
+    _error_code_ranges = {
+        'NetworkError': (0x1000, 0x1FFF),
+        'PackageError': (0x2000, 0x2FFF),
+        'DependencyError': (0x3000, 0x3FFF),
+        'FilesystemError': (0x4000, 0x4FFF),
+        'UserError': (0x5000, 0x5FFF),
+        'InternalError': (0x6000, 0x6FFF),
+        'SystemError': (0x7000, 0x7FFF),
+    }
+    _next_code = {}
+
+    def __new__(cls, name, bases, class_dict):
+        if bases and bases[0] == Error:
+            if name in cls._error_code_ranges:
+                start, _ = cls._error_code_ranges[name]
+                class_dict['code'] = start
+                cls._next_code[name] = start + 1
+        elif bases and bases[0].__name__ in cls._error_code_ranges:
+            parent = bases[0].__name__
+            start, end = cls._error_code_ranges[parent]
+            if parent not in cls._next_code:
+                cls._next_code[parent] = start + 1
+
+            code = cls._next_code[parent]
+            if code > end:
+                raise ValueError(f"No more codes available for {parent}")
+            class_dict['code'] = code
+            cls._next_code[parent] += 1
+
+        return super().__new__(cls, name, bases, class_dict)
+
+class Error(metaclass=ErrorMeta):
     """Base class for errors."""
-    
-    def __init__(self, message: str, code: int) -> None:
+
+    def __init__(self, message: str) -> None:
         """Initialize an error.
 
         Args:
         message (str): The error message.
-        code (int): The error code.
         """
 
         self.message = self.format_message(message)
-        self.code = code
         self.type = self.__class__.__name__
         self.stacktrace = self._generate_stacktrace()
 
     @staticmethod
     def format_message(message: str) -> str:
-        """Format the error message to spend max. 80 characaters per line.
+        """Format the error message to spend max. 80 characters per line.
         
         Args:
         message (str): The error message.
@@ -69,8 +99,6 @@ class Error:
 class NetworkError(Error):
     """Package errors."""
 
-    _next_code: int = 0x1000
-
     def __init__(self, message: str) -> None:
         """Initialize a package error.
 
@@ -78,15 +106,11 @@ class NetworkError(Error):
         message (str): The error message.
         """
 
-        code = NetworkError._next_code
-        NetworkError._next_code += 1
-        super().__init__(message, code)
+        super().__init__(message)
 
 class PackageError(Error):
     """Package errors."""
 
-    _next_code: int = 0x2000
-
     def __init__(self, message: str) -> None:
         """Initialize a package error.
 
@@ -94,14 +118,10 @@ class PackageError(Error):
         message (str): The error message.
         """
 
-        code = PackageError._next_code
-        PackageError._next_code += 1
-        super().__init__(message, code)
+        super().__init__(message)
 
 class DependencyError(Error):
     """Dependency errors."""
-
-    _next_code: int = 0x3000
 
     def __init__(self, message: str) -> None:
         """Initialize a dependency error.
@@ -110,14 +130,10 @@ class DependencyError(Error):
         message (str): The error message.
         """
 
-        code = DependencyError._next_code
-        DependencyError._next_code += 1
-        super().__init__(message, code)
+        super().__init__(message)
 
 class FilesystemError(Error):
     """Filesystem errors."""
-
-    _next_code: int = 0x4000
 
     def __init__(self, message: str) -> None:
         """Initialize a filesystem error.
@@ -126,14 +142,10 @@ class FilesystemError(Error):
         message (str): The error message.
         """
 
-        code = FilesystemError._next_code
-        FilesystemError._next_code += 1
-        super().__init__(message, code)
+        super().__init__(message)
 
 class UserError(Error):
     """User errors."""
-
-    _next_code: int = 0x5000
 
     def __init__(self, message: str) -> None:
         """Initialize a user error.
@@ -142,14 +154,10 @@ class UserError(Error):
         message (str): The error message.
         """
 
-        code = UserError._next_code
-        UserError._next_code += 1
-        super().__init__(message, code)
+        super().__init__(message)
 
 class InternalError(Error):
     """Internal errors."""
-
-    _next_code: int = 0x6000
 
     def __init__(self, message: str) -> None:
         """Initialize an internal error.
@@ -158,14 +166,10 @@ class InternalError(Error):
         message (str): The error message.
         """
 
-        code = InternalError._next_code
-        InternalError._next_code += 1
-        super().__init__(message, code)
+        super().__init__(message)
 
 class SystemError(Error):
     """System errors."""
-
-    _next_code: int = 0x7000
 
     def __init__(self, message: str) -> None:
         """Initialize a system error.
@@ -174,9 +178,7 @@ class SystemError(Error):
         message (str): The error message.
         """
 
-        code = SystemError._next_code
-        SystemError._next_code += 1
-        super().__init__(message, code)
+        super().__init__(message)
 
 # NetworkError
 
@@ -285,7 +287,7 @@ class PackageMetadataNotFoundError(PackageError):
         code (int): The error code. Defaults to 1.
         """
 
-        super().__init__(f'Clound not localize metadata for the "{package_name}" package.')
+        super().__init__(f'Could not localize metadata for the "{package_name}" package.')
 
 # UserError
 
